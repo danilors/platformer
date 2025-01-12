@@ -1,8 +1,13 @@
 love.load = function()
-    love.window.setMode(1000, 768)
+    print('loading love game')
+    love.window.setMode(1500, 768)
 
     anim8 = require "libraries.anim8.anim8"
     sti = require "libraries/Simple-Tiled-Implementation/sti"
+    cameraFile = require "libraries/hump/camera"
+
+    cam = cameraFile()
+
     sprites = {}
     sprites.playerSheet = love.graphics.newImage("assets/sprites/playerSheet.png")
 
@@ -35,11 +40,10 @@ love.load = function()
 
     require("player")
 
-    platform = world:newRectangleCollider(250, 400, 300, 100, {collision_class = "Platform"})
-    platform:setType("static")
+    -- dangerZone = world:newRectangleCollider(0, 550, 800, 50, {collision_class = "Danger"})
+    -- dangerZone:setType("static")
 
-    dangerZone = world:newRectangleCollider(0, 550, 800, 50, {collision_class = "Danger"})
-    dangerZone:setType("static")
+    platforms = {}
 
     loadMap()
 end
@@ -48,12 +52,16 @@ love.update = function(dt)
     world:update(dt)
     gameMap:update(dt)
     player.playerUpdate(dt)
+    local px, py = player:getPosition()
+    cam:lookAt(px, love.graphics.getHeight() / 2)
 end
 
 love.draw = function()
-    world:draw()
+    cam:attach()
     gameMap:drawLayer(gameMap.layers["Tile Layer 1"])
+    world:draw()
     player.drawPlayer()
+    cam:detach()
 end
 
 love.keypressed = function(key)
@@ -75,5 +83,20 @@ love.mousepressed = function(x, y, button)
 end
 
 loadMap = function()
+    print('loading map data')
     gameMap = sti("assets/sprites/maps/level1.lua")
+    print('start load platforms')
+    for i, obj in pairs(gameMap.layers["platforms"].objects) do
+        print('load platform: ' .. i)
+        spwanPlatform(obj.x, obj.y, obj.width, obj.height)
+    end
+end
+
+function spwanPlatform(x, y, width, height)
+    
+    if width > 0 and height > 0 then
+        local platform = world:newRectangleCollider(x, y, width, height, {collision_class = "Platform"})
+        platform:setType("static")
+        table.insert(platforms, platform)
+    end
 end
