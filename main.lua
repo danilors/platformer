@@ -1,6 +1,6 @@
 love.load = function()
-    print('loading love game')
-    love.window.setMode(1500, 768)
+    print("loading love game")
+    love.window.setMode(1000, 768)
 
     anim8 = require "libraries.anim8.anim8"
     sti = require "libraries/Simple-Tiled-Implementation/sti"
@@ -10,8 +10,10 @@ love.load = function()
 
     sprites = {}
     sprites.playerSheet = love.graphics.newImage("assets/sprites/playerSheet.png")
+    sprites.enemySheet = love.graphics.newImage("assets/sprites/enemySheet.png")
 
     local grid = anim8.newGrid(614, 564, sprites.playerSheet:getWidth(), sprites.playerSheet:getHeight())
+    local enemyGrip = anim8.newGrid(100, 79, sprites.enemySheet:getWidth(), sprites.enemySheet:getHeight())
 
     animations = {}
     spritesItemsIntervalIdle = "1-15"
@@ -29,6 +31,8 @@ love.load = function()
     timeIntervalRun = 0.05
     animations.run = anim8.newAnimation(grid(spritesItemsIntervalRun, spritesRowRun), timeIntervalRun)
 
+    animations.enemy = anim8.newAnimation(enemyGrip("1-2", 1), 0.03)
+
     wf = require "libraries.windfield.windfield"
     worldSleep = false
     world = wf.newWorld(0, 800, worldSleep)
@@ -39,6 +43,7 @@ love.load = function()
     world:addCollisionClass("Danger")
 
     require("player")
+    require("enemy")
 
     -- dangerZone = world:newRectangleCollider(0, 550, 800, 50, {collision_class = "Danger"})
     -- dangerZone:setType("static")
@@ -46,14 +51,19 @@ love.load = function()
     platforms = {}
 
     loadMap()
+
+   
 end
 
 love.update = function(dt)
     world:update(dt)
     gameMap:update(dt)
     player.playerUpdate(dt)
-    local px, py = player:getPosition()
-    cam:lookAt(px, love.graphics.getHeight() / 2)
+    updateEnemies(dt)
+    if player.body then
+        local px, py = player:getPosition()
+        cam:lookAt(px, love.graphics.getHeight() / 2)
+    end
 end
 
 love.draw = function()
@@ -61,13 +71,14 @@ love.draw = function()
     gameMap:drawLayer(gameMap.layers["Tile Layer 1"])
     world:draw()
     player.drawPlayer()
+    drawEnemies()
     cam:detach()
 end
 
 love.keypressed = function(key)
     if key == "up" then
         if player.grounded then
-            local impulse = -4000
+            local impulse = -5000
             player:applyLinearImpulse(0, impulse)
         end
     end
@@ -83,17 +94,21 @@ love.mousepressed = function(x, y, button)
 end
 
 loadMap = function()
-    print('loading map data')
+    print("loading map data")
     gameMap = sti("assets/sprites/maps/level1.lua")
-    print('start load platforms')
+    print("start load platforms")
     for i, obj in pairs(gameMap.layers["platforms"].objects) do
-        print('load platform: ' .. i)
+        print("load platform: " .. i)
         spwanPlatform(obj.x, obj.y, obj.width, obj.height)
+    end
+    print("start load enemies")
+    for i, obj in pairs(gameMap.layers["Enemies"].objects) do
+        print("load enemy: " .. i)
+        spawnEnemy(obj.x, obj.y)
     end
 end
 
 function spwanPlatform(x, y, width, height)
-    
     if width > 0 and height > 0 then
         local platform = world:newRectangleCollider(x, y, width, height, {collision_class = "Platform"})
         platform:setType("static")
