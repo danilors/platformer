@@ -1,5 +1,8 @@
 love.load = function()
+    love.window.setMode(1000, 768)
+
     anim8 = require "libraries.anim8.anim8"
+    sti = require "libraries/Simple-Tiled-Implementation/sti"
     sprites = {}
     sprites.playerSheet = love.graphics.newImage("assets/sprites/playerSheet.png")
 
@@ -30,23 +33,26 @@ love.load = function()
     world:addCollisionClass("Player" --[[ , {ignores = {'Platform'}} ]])
     world:addCollisionClass("Danger")
 
-    require('player')
+    require("player")
 
     platform = world:newRectangleCollider(250, 400, 300, 100, {collision_class = "Platform"})
     platform:setType("static")
 
     dangerZone = world:newRectangleCollider(0, 550, 800, 50, {collision_class = "Danger"})
     dangerZone:setType("static")
+
+    loadMap()
 end
 
 love.update = function(dt)
     world:update(dt)
+    gameMap:update(dt)
     player.playerUpdate(dt)
-    
 end
 
 love.draw = function()
     world:draw()
+    gameMap:drawLayer(gameMap.layers["Tile Layer 1"])
     player.drawPlayer()
 end
 
@@ -63,7 +69,11 @@ love.mousepressed = function(x, y, button)
     if button == 1 then
         local colliders = world:queryCircleArea(x, y, 200, {"Platform", "Danger"})
         for i, c in ipairs(colliders) do
-            c:destroy()
+            -- c:destroy()
         end
     end
+end
+
+loadMap = function()
+    gameMap = sti("assets/sprites/maps/level1.lua")
 end
