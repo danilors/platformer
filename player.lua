@@ -6,7 +6,7 @@ player.isMoving = false
 player.direction = 1
 player.grounded = true
 
-playerUpdate = function(dt)
+player.playerUpdate = function(dt)
     if player.body then
         player.isMoving = false
 
@@ -52,7 +52,7 @@ playerUpdate = function(dt)
     player.animation:update(dt)
 end
 
-drawPlayer = function()
+player.drawPlayer = function()
     if player.body then
         local rotation = nil
         local playerXScale = 0.25 * player.direction

@@ -41,13 +41,13 @@ end
 
 love.update = function(dt)
     world:update(dt)
-    playerUpdate(dt)
+    player.playerUpdate(dt)
     
 end
 
 love.draw = function()
     world:draw()
-    drawPlayer()
+    player.drawPlayer()
 end
 
 love.keypressed = function(key)
