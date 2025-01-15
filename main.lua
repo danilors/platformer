@@ -35,7 +35,7 @@ love.load = function()
 
     wf = require "libraries.windfield.windfield"
     worldSleep = false
-    world = wf.newWorld(0, 800, worldSleep)
+    world = wf.newWorld(0, 500, worldSleep)
     world:setQueryDebugDrawing(true)
 
     world:addCollisionClass("Platform")
@@ -44,15 +44,24 @@ love.load = function()
 
     require("player")
     require("enemy")
+    require("libraries/show")
 
     -- dangerZone = world:newRectangleCollider(0, 550, 800, 50, {collision_class = "Danger"})
     -- dangerZone:setType("static")
 
     platforms = {}
 
-    loadMap()
+    flagX = 0
+    flagY = 0
+    saveData = {}
+    saveData.currentLevel = "level1"
 
-   
+    if love.filesystem.getInfo("data.lua") then
+        local data = love.filesystem.load("data.lua")
+        data()
+    end
+
+    loadMap(saveData.currentLevel)
 end
 
 love.update = function(dt)
@@ -63,6 +72,15 @@ love.update = function(dt)
     if player.body then
         local px, py = player:getPosition()
         cam:lookAt(px, love.graphics.getHeight() / 2)
+    end
+
+    local colliders = world:queryCircleArea(flagX, flagY, 10, {"Player"})
+    if #colliders > 0 then
+        if saveData.currentLevel == "level1" then
+            loadMap("level2")
+        elseif saveData.currentLevel == "level2" then
+            loadMap("level1")
+        end
     end
 end
 
@@ -78,9 +96,11 @@ end
 love.keypressed = function(key)
     if key == "up" then
         if player.grounded then
-            local impulse = -5000
-            player:applyLinearImpulse(0, impulse)
+            player:applyLinearImpulse(0, player.impulse)
         end
+    end
+    if key == "r" then
+        loadMap("level2")
     end
 end
 
@@ -93,9 +113,38 @@ love.mousepressed = function(x, y, button)
     end
 end
 
-loadMap = function()
+destroyAll = function()
+    local i = #platforms
+    while i > -1 do
+        if platforms[i] ~= nil then
+            platforms[i]:destroy()
+        end
+        table.remove(platforms, i)
+        i = i - 1
+    end
+
+    local i = #enemies
+    while i > -1 do
+        if enemies[i] ~= nil then
+            enemies[i]:destroy()
+        end
+        table.remove(enemies, i)
+        i = i - 1
+    end
+end
+
+loadMap = function(mapName)
+    saveData.currentLevel = mapName
+    dir = love.filesystem.getSaveDirectory()
+    print("writing data in: " .. dir)
+
+    dataSaved = love.filesystem.write("data.lua", table.show(saveData, "saveData"))
+    print("data result: " .. string.format("%s", dataSaved))
+    destroyAll()
+    player:setPosition(300, 100)
+
     print("loading map data")
-    gameMap = sti("assets/sprites/maps/level1.lua")
+    gameMap = sti("assets/sprites/maps/" .. mapName .. ".lua")
     print("start load platforms")
     for i, obj in pairs(gameMap.layers["platforms"].objects) do
         print("load platform: " .. i)
@@ -105,6 +154,10 @@ loadMap = function()
     for i, obj in pairs(gameMap.layers["Enemies"].objects) do
         print("load enemy: " .. i)
         spawnEnemy(obj.x, obj.y)
+    end
+    for i, obj in pairs(gameMap.layers["Flag"].objects) do
+        flagX = obj.x
+        flagY = obj.y
     end
 end
 

@@ -5,6 +5,7 @@ player:setFixedRotation(true)
 player.isMoving = false
 player.direction = 1
 player.grounded = true
+player.impulse = -5000
 print('loading player data')
 player.playerUpdate = function(dt)
     if player.body then
