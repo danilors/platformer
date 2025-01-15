@@ -57,6 +57,7 @@ love.load = function()
     saveData.currentLevel = "level1"
 
     if love.filesystem.getInfo("data.lua") then
+        print("loading saved data")
         local data = love.filesystem.load("data.lua")
         data()
     end
@@ -137,9 +138,8 @@ loadMap = function(mapName)
     saveData.currentLevel = mapName
     dir = love.filesystem.getSaveDirectory()
     print("writing data in: " .. dir)
-
     dataSaved = love.filesystem.write("data.lua", table.show(saveData, "saveData"))
-    print("data result: " .. string.format("%s", dataSaved))
+    print("data was saved?: " .. string.format("%s", dataSaved))
     destroyAll()
     player:setPosition(300, 100)
 
