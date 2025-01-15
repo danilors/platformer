@@ -97,7 +97,7 @@ love.draw = function()
     love.graphics.draw(sprites.background, 0, 0)
     cam:attach()
     gameMap:drawLayer(gameMap.layers["Tile Layer 1"])
-    world:draw()
+    -- world:draw()
     player.drawPlayer()
     drawEnemies()
     cam:detach()
@@ -151,15 +151,22 @@ loadMap = function(mapName)
     dataSaved = love.filesystem.write("data.lua", table.show(saveData, "saveData"))
     print("data was saved?: " .. string.format("%s", dataSaved))
     destroyAll()
-    player:setPosition(playerStartX, playerStartY)
 
     print("loading map data")
     gameMap = sti("assets/sprites/maps/" .. mapName .. ".lua")
     print("start load platforms")
+
+    for i, obj in pairs(gameMap.layers["Start"].objects) do
+        playerStartX = obj.x
+        playerStartY = obj.y
+    end
+    player:setPosition(playerStartX, playerStartY)
+
     for i, obj in pairs(gameMap.layers["platforms"].objects) do
         print("load platform: " .. i)
         spwanPlatform(obj.x, obj.y, obj.width, obj.height)
     end
+
     print("start load enemies")
     for i, obj in pairs(gameMap.layers["Enemies"].objects) do
         print("load enemy: " .. i)
