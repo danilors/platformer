@@ -8,9 +8,17 @@ love.load = function()
 
     cam = cameraFile()
 
+    sounds = {}
+    sounds.jump = love.audio.newSource("assets/media/jump.wav", "static")
+    sounds.music = love.audio.newSource("assets/media/music.mp3", "stream")
+    sounds.music:setLooping(true)
+    sounds.music:setVolume(0.2)
+    sounds.music:play()
+
     sprites = {}
     sprites.playerSheet = love.graphics.newImage("assets/sprites/playerSheet.png")
     sprites.enemySheet = love.graphics.newImage("assets/sprites/enemySheet.png")
+    sprites.background = love.graphics.newImage("assets/sprites/background.png")
 
     local grid = anim8.newGrid(614, 564, sprites.playerSheet:getWidth(), sprites.playerSheet:getHeight())
     local enemyGrip = anim8.newGrid(100, 79, sprites.enemySheet:getWidth(), sprites.enemySheet:getHeight())
@@ -46,8 +54,8 @@ love.load = function()
     require("enemy")
     require("libraries/show")
 
-    -- dangerZone = world:newRectangleCollider(0, 550, 800, 50, {collision_class = "Danger"})
-    -- dangerZone:setType("static")
+    dangerZone = world:newRectangleCollider(-500, 800, 5000, 50, {collision_class = "Danger"})
+    dangerZone:setType("static")
 
     platforms = {}
 
@@ -86,6 +94,7 @@ love.update = function(dt)
 end
 
 love.draw = function()
+    love.graphics.draw(sprites.background, 0, 0)
     cam:attach()
     gameMap:drawLayer(gameMap.layers["Tile Layer 1"])
     world:draw()
@@ -98,6 +107,7 @@ love.keypressed = function(key)
     if key == "up" then
         if player.grounded then
             player:applyLinearImpulse(0, player.impulse)
+            sounds.jump:play()
         end
     end
     if key == "r" then
@@ -141,7 +151,7 @@ loadMap = function(mapName)
     dataSaved = love.filesystem.write("data.lua", table.show(saveData, "saveData"))
     print("data was saved?: " .. string.format("%s", dataSaved))
     destroyAll()
-    player:setPosition(300, 100)
+    player:setPosition(playerStartX, playerStartY)
 
     print("loading map data")
     gameMap = sti("assets/sprites/maps/" .. mapName .. ".lua")
